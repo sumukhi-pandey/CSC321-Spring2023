@@ -1,6 +1,8 @@
 # %%
 from Crypto.Cipher import AES 
 from Crypto.Random import get_random_bytes
+import random
+import string
 import sys
 import urllib.parse
 python_version = sys.version_info
@@ -53,7 +55,7 @@ def submit(user_string):
 
 def verify(ciphertext):
     cipher = AES.new(KEY, AES.MODE_CBC, IV=IV)
-    decrypted_string = cipher.decrypt(ciphertext).decode("utf-8")
+    decrypted_string = cipher.decrypt(ciphertext).decode("ISO-8859-1")
     return urllib.parse.unquote(decrypted_string)
 
 def cbc_testcase(string, substring, truthiness):
@@ -63,13 +65,41 @@ def cbc_testcase(string, substring, truthiness):
                 string, substring, truthiness
         ))
 
+def bitflip(ciphertext, target_block):
+    for i in range(15, -1, -1):
+        decrypted = verify(ciphertext)
+        block_input = ciphertext[i] ^ ord(decrypted[i + AES.block_size])
+        replacement = block_input ^ ord(target_block[i])
+        ciphertext = ciphertext[:i] + replacement.to_bytes(
+            (replacement.bit_length() + 7) // 8,
+            sys.byteorder
+        ) + ciphertext[i + 1:]
+    return ciphertext
+
 # %%
 def task2():
     substr = ";admin=true;"
-    cbc_testcase(verify(submit("blahblahblah;admin=true;datadata;")), substr, True)
-    cbc_testcase(verify(submit("blahblahblah;admin=false;datadata;")), substr, False)
-    cbc_testcase(verify(submit("blahblahblah;admin=tru;datadata;")), substr, False)
-    cbc_testcase(verify(submit("blahblahblah;admin;=truedatadata;")), substr, False)
+    cbc_testcase(verify(submit("blahblahblah;admin=true;datadata")), substr, True)
+    cbc_testcase(verify(submit("blahblahblah;admin=false;datadata")), substr, False)
+    cbc_testcase(verify(submit("blahblahblah;admin=tru;datadata")), substr, False)
+    cbc_testcase(verify(submit("blahblahblah;admin;=truedatadata")), substr, False)
 
 task2()
+
+# %% 
+def task2_fun_part():
+    success_count = 0
+    tries = 1000
+    target = ";admin=true;"
+    for i in range(tries):
+        try:
+            input_str = ''.join(random.choice(string.printable) for x in range(32))
+            verified = verify(bitflip(submit(input_str), target + "------"))
+            success_count += 1
+        except:
+            pass
+
+    print("Target \"{}\" successfully inserted through bit flip attack:\n{} out of {} times".format(target, success_count, tries))
+
+task2_fun_part()
 # %%

@@ -74,6 +74,7 @@ def cbc_encryption(plaintext, key, iv):
         last_encryption = cipher.encrypt(xor_bytes(last_encryption, plaintext[index1 : index2]))
         ciphertext = ciphertext + last_encryption
     return ciphertext
+
 # %%
 def task1():
     if (get_filetype(FILEPATH) == ".bmp"):
