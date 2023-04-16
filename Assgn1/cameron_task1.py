@@ -9,21 +9,21 @@ if (python_version.major == 3 and python_version.minor > 7):
     import time # PyCryptodome library uses time.clock as dependency, but
     time.clock = time.time # time.clock was depricated in Python 3.8
 
-KEY_LENGTH_BYTES = 32 # 256 bits
+KEY_LENGTH_BYTES = 16 # 128 bits
 BMP_HEADER_SIZE_BYTES = 56 # standard header size, try 138 if it doesn't work
+FILEPATH = "./mustang.bmp"
 
 # %%
-get_filetype = lambda filepath : Path(filepath).suffix
-get_filesize_bytes = lambda filepath : os.stat(filepath).st_size
+get_filetype = lambda FILEPATH : Path(FILEPATH).suffix
+get_filesize_bytes = lambda FILEPATH : os.stat(FILEPATH).st_size
 generate_key = lambda byte_count : get_random_bytes(byte_count)
-generate_iv = lambda byte_count, key : get_random_bytes(byte_count)
 
-def read_plaintext_bin(filepath):
-    with open(filepath, "rb") as plaintext_file:
-        return plaintext_file.read(get_filesize_bytes(filepath))
+def read_plaintext_bin(FILEPATH):
+    with open(FILEPATH, "rb") as plaintext_file:
+        return plaintext_file.read(get_filesize_bytes(FILEPATH))
 
-def write_ciphertext_bin(filepath, filedata): 
-    with open(filepath, "wb") as new_file:
+def write_ciphertext_bin(FILEPATH, filedata): 
+    with open(FILEPATH, "wb") as new_file:
         new_file.write(filedata)
 
 def generate_initialization_vector(key):
@@ -76,9 +76,8 @@ def cbc_encryption(plaintext, key, iv):
     return ciphertext
 # %%
 def task1():
-    filepath = "./mustang.bmp"
-    if (get_filetype(filepath) == ".bmp"):
-        plaintext_bin = read_plaintext_bin(filepath)
+    if (get_filetype(FILEPATH) == ".bmp"):
+        plaintext_bin = read_plaintext_bin(FILEPATH)
         bmp = separate_header(plaintext_bin, BMP_HEADER_SIZE_BYTES)
         
         ecb_key = generate_key(KEY_LENGTH_BYTES)
@@ -94,6 +93,5 @@ def task1():
             bmp["header"] + cbc_encryption(bmp["data"], cbc_key, cbc_iv)
         )
 
-# %%
 task1()
 # %%
