@@ -16,6 +16,7 @@ BMP_HEADER_SIZE_BYTES = 56 # standard header size, try 138 if it doesn't work
 get_filetype = lambda filepath : Path(filepath).suffix
 get_filesize_bytes = lambda filepath : os.stat(filepath).st_size
 generate_key = lambda byte_count : get_random_bytes(byte_count)
+generate_iv = lambda byte_count, key : get_random_bytes(byte_count)
 
 def read_plaintext_bin(filepath):
     with open(filepath, "rb") as plaintext_file:
@@ -24,6 +25,12 @@ def read_plaintext_bin(filepath):
 def write_ciphertext_bin(filepath, filedata): 
     with open(filepath, "wb") as new_file:
         new_file.write(filedata)
+
+def generate_initialization_vector(key):
+    iv = key
+    while iv == key:
+        iv = get_random_bytes(AES.block_size)
+    return iv
 
 def pkcs7(plaintext):
     bytes_to_add = 16 - (len(plaintext) % 16)
@@ -38,6 +45,12 @@ def separate_header(plaintext, header_size_bytes):
         "data": plaintext[header_size_bytes:]
     }
 
+def xor_bytes(a, b):
+    a_int = int.from_bytes(a, sys.byteorder)
+    b_int = int.from_bytes(b, sys.byteorder)
+    x = a_int ^ b_int
+    return x.to_bytes(len(a) if len(a) >= len(b) else len(b), sys.byteorder)
+
 def ecb_encryption(plaintext, key):
     plaintext = pkcs7(plaintext)
     cipher = AES.new(key, AES.MODE_ECB)
@@ -49,16 +62,36 @@ def ecb_encryption(plaintext, key):
         ciphertext = ciphertext + cipher.encrypt(plaintext[index1 : index2])
     return ciphertext
 
+def cbc_encryption(plaintext, key, iv):
+    plaintext = pkcs7(plaintext)
+    cipher = AES.new(key, AES.MODE_ECB)
+    ciphertext = b""
+    last_encryption = iv
+    block_count = len(plaintext) // AES.block_size
+    for block in range(block_count):
+        index1 = block * AES.block_size
+        index2 = index1 + AES.block_size
+        last_encryption = cipher.encrypt(xor_bytes(last_encryption, plaintext[index1 : index2]))
+        ciphertext = ciphertext + last_encryption
+    return ciphertext
 # %%
 def task1():
-    filepath = "./cp-logo.bmp"
+    filepath = "./mustang.bmp"
     if (get_filetype(filepath) == ".bmp"):
         plaintext_bin = read_plaintext_bin(filepath)
         bmp = separate_header(plaintext_bin, BMP_HEADER_SIZE_BYTES)
         
-        write_ciphertext_bin( # ECB
-            "ecb_cameron_test3.bmp",
-            bmp["header"] + ecb_encryption(bmp["data"], generate_key(KEY_LENGTH_BYTES))
+        ecb_key = generate_key(KEY_LENGTH_BYTES)
+        write_ciphertext_bin(
+            "mustang_ecb.bmp",
+            bmp["header"] + ecb_encryption(bmp["data"], ecb_key)
+        )
+
+        cbc_key = generate_key(KEY_LENGTH_BYTES)
+        cbc_iv = generate_initialization_vector(cbc_key)
+        write_ciphertext_bin(
+            "mustang_cbc.bmp",
+            bmp["header"] + cbc_encryption(bmp["data"], cbc_key, cbc_iv)
         )
 
 # %%
