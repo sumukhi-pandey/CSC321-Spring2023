@@ -25,7 +25,7 @@ def graph_aes(aes):
     )
     plt.legend(title="AES Key Size", bbox_to_anchor=(1.0, 1.0))
     plt.ylabel("kB / second\nProcessed ", rotation='horizontal', ha='right')
-    plt.savefig('task3_graph_aes.pdf')
+    plt.savefig('task3_graph_aes.png', bbox_inches="tight")
 
 def get_rsa_df(rsa):
     df = pd.DataFrame([col.split()[5:] for col in rsa.split("\n")[5:-1]])
@@ -43,7 +43,7 @@ def graph_rsa(rsa):
     )
     plt.legend(title="RSA Function", bbox_to_anchor=(1.0, 1.0))
     plt.ylabel("Operations /\nsecond     ", rotation='horizontal', ha='right')
-    plt.savefig('task3_graph_rsa.pdf')
+    plt.savefig('task3_graph_rsa.png', bbox_inches="tight")
 
 # %%
 aes_speed, rsa_speed = run_speed_tests()
