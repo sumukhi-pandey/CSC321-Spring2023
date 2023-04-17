@@ -89,12 +89,18 @@ task2()
 # %% 
 def task2_fun_part():
     success_count = 0
-    tries = 1000
+    tries = 10000
     target = ";admin=true;"
     for i in range(tries):
         try:
-            input_str = ''.join(random.choice(string.printable) for x in range(32))
-            verified = verify(bitflip(submit(input_str), target + "------"))
+            cbc_testcase(
+                verify(bitflip(
+                    submit(''.join(random.choice(string.printable) for x in range(32))), 
+                    target + "------"
+                )), 
+                target, 
+                True
+            )
             success_count += 1
         except:
             pass
