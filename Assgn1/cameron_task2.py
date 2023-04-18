@@ -108,4 +108,23 @@ def task2_fun_part():
     print("Target \"{}\" successfully inserted through bit flip attack:\n{} out of {} times".format(target, success_count, tries))
 
 task2_fun_part()
+
+# %%
+def task2_fun_part_demo():
+    target = ";admin=true;"
+    try:
+        init_string = ''.join(random.choice(string.printable) for x in range(32))
+        mod_string = verify(bitflip(
+            submit(init_string), 
+            target + "------"
+        ))
+        cbc_testcase(mod_string, target, True)
+        print("Initial plaintext:\nuserid=456; userdata={};session-id=31337".format(init_string))
+        print()
+        print("Bit-flipped plaintext:\n{}".format(mod_string))
+    except:
+        print("Bit flip failed: rerun cell.")
+
+task2_fun_part_demo()
+
 # %%
