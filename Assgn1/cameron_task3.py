@@ -2,6 +2,7 @@
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
+KILOBYTE_IN_BITS = 0.000125
 
 # %%
 def run_speed_tests():
@@ -33,6 +34,9 @@ def get_rsa_df(rsa):
         index={0:"rsa 512 bits", 1:"rsa 1024 bits", 2:"rsa 2048 bits", 3:"rsa 4096 bits"},
         columns={0:"sign", 1:"verify", 2:"sign/second", 3:"verify/second"}, 
         inplace=True)
+    for i in df.index:
+        df["sign"][i] = KILOBYTE_IN_BITS * float(i.split()[1]) * float(df["sign"][i])
+        df["verify"][i] = KILOBYTE_IN_BITS * float(i.split()[1]) * float(df["verify"][i])
     return df.astype("float")
 
 def graph_rsa(rsa):
@@ -42,7 +46,7 @@ def graph_rsa(rsa):
         xlabel="Key Size",
     )
     plt.legend(title="RSA Function", bbox_to_anchor=(1.0, 1.0))
-    plt.ylabel("Operations /\nsecond     ", rotation='horizontal', ha='right')
+    plt.ylabel("kB / second\nProcessed ", rotation='horizontal', ha='right')
     plt.savefig('task3_graph_rsa.png', bbox_inches="tight")
 
 # %%
