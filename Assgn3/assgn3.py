@@ -7,6 +7,8 @@ import string
 import sys
 import time
 
+CHAR_LIST = string.ascii_uppercase + string.ascii_lowercase + string.digits
+
 # %%
 truncate = lambda string, length: string[:length]
 
@@ -25,24 +27,67 @@ def get_random_string():
         k=length
     ))
 
-def birthday_attack(string, truncate_limit):
-    new_string = ''
-    digest = truncate(hash_sha256(string), truncate_limit)
-    compare = truncate(hash_sha256(new_string), truncate_limit)
-    used = {string}
-    counter = 0
-    start_time = time.time()
-    while digest != compare:
-        new_string = get_random_string()
-        if new_string not in used:
-            used.add(new_string)
-            compare = truncate(hash_sha256(new_string), truncate_limit)
-            counter += 1
-    return {
-        "String": new_string,
-        "Inputs": counter,
-        "Seconds": time.time() - start_time
+# def birthday_attack(string, truncate_limit):
+#     new_string = ''
+#     digest = truncate(hash_sha256(string), truncate_limit)
+#     compare = truncate(hash_sha256(new_string), truncate_limit)
+#     used = {string}
+#     counter = 0
+#     start_time = time.time()
+#     while digest != compare:
+#         new_string = get_random_string()
+#         if new_string not in used:
+#             used.add(new_string)
+#             compare = truncate(hash_sha256(new_string), truncate_limit)
+#             counter += 1
+#     return {
+#         "String": new_string,
+#         "Inputs": counter,
+#         "Seconds": time.time() - start_time
+#     }
+
+def birthday_attack(plaintext, truncate_limit, recursion_depth):
+    details = {
+        "String": "",
+        "Inputs": 0,
+        "Seconds": -time.time(),
+        "Depth": recursion_depth
     }
+    if find_matching_hash(plaintext, "", details, truncate_limit, recursion_depth):
+        return details
+    return {
+        "String": "ATTACK FAILED",
+        "Inputs": 0,
+        "Seconds": 0,
+        "Depth": 0
+    }
+
+
+def find_matching_hash(plaintext, match, details, truncate_limit, max_depth):
+    if max_depth == 0:
+        return False
+    
+    ciphertext = truncate(hash_sha256(plaintext), truncate_limit)
+    cipher_match = truncate(hash_sha256(match), truncate_limit)
+    details["Inputs"] += 1
+    if ciphertext == cipher_match:
+        details["String"] = match
+        details["Seconds"] += time.time()
+        details["Depth"] -= max_depth
+        return True
+    
+    for char in CHAR_LIST:
+        next = find_matching_hash(
+            plaintext, 
+            match + char, 
+            details, 
+            truncate_limit, 
+            max_depth - 1
+        )
+        if next:
+            return True
+    return False
+
 
 def graph(df, column):
     df[column].plot(
