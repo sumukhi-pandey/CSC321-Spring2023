@@ -75,13 +75,14 @@ def task1c(min_bit_size, max_bit_size):
         index=range(min_bit_size, max_bit_size + 1, 2),
         columns=["String 1", "String 2", "Inputs", "Seconds"]
     )
+    print("[String 1, String 2, Input Count, Seconds Elapsed]")
     for i in df.index:
         results = birthday_attack(i, 0.999)
         df["String 1"][i] = results["String 1"]
         df["String 2"][i] = results["String 2"]
         df["Inputs"][i] = results["Inputs"]
         df["Seconds"][i] = results["Seconds"]
-        print(df.loc[i].tolist())
+        print("{}: {}".format(i, df.loc[i].tolist()))
     return df
     
 
