@@ -81,7 +81,7 @@ def task1c(min_bit_size, max_bit_size):
         df["String 2"][i] = results["String 2"]
         df["Inputs"][i] = results["Inputs"]
         df["Seconds"][i] = results["Seconds"]
-        print(df.loc[i])
+        print(df.loc[i].tolist())
     return df
     
 
