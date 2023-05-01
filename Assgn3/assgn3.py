@@ -1,6 +1,7 @@
 # %%
 import hashlib
 import matplotlib.pyplot as plt
+import math
 import pandas as pd
 import random
 import string
@@ -10,7 +11,7 @@ import time
 CHAR_LIST = string.ascii_uppercase + string.ascii_lowercase + string.digits
 
 # %%
-truncate = lambda string, length: string[:length]
+truncate = lambda hex_string, bit_length: int(bin(int(hex_string, 16))[:bit_length + 2], 2)
 
 def hash_sha256(plain):
     if type(plain) == int:
@@ -21,78 +22,39 @@ def hash_sha256(plain):
         return 0 
 
 def get_random_string():
-    length = random.randint(1, 21)
+    length = random.randint(1, 10)
     return ''.join(random.choices(
         string.ascii_uppercase + string.ascii_lowercase + string.digits, 
         k=length
     ))
 
-# def birthday_attack(string, truncate_limit):
-#     new_string = ''
-#     digest = truncate(hash_sha256(string), truncate_limit)
-#     compare = truncate(hash_sha256(new_string), truncate_limit)
-#     used = {string}
-#     counter = 0
-#     start_time = time.time()
-#     while digest != compare:
-#         new_string = get_random_string()
-#         if new_string not in used:
-#             used.add(new_string)
-#             compare = truncate(hash_sha256(new_string), truncate_limit)
-#             counter += 1
-#     return {
-#         "String": new_string,
-#         "Inputs": counter,
-#         "Seconds": time.time() - start_time
-#     }
-
-def birthday_attack(plaintext, truncate_limit, recursion_depth):
-    details = {
-        "String": "",
+def birthday_attack(bit_length, probability):
+    value_count = pow(2 * pow(2, bit_length) * math.log(1 / (1 - probability)), 0.5)
+    strings = {truncate(hash_sha256(""), bit_length): "" }
+    return_object = {
+        "String 1": "ATTACK FAILED",
+        "String 2": "ATTACK FAILED",
         "Inputs": 0,
-        "Seconds": -time.time(),
-        "Depth": recursion_depth
+        "Seconds": -time.time()
     }
-    if find_matching_hash(plaintext, "", details, truncate_limit, recursion_depth):
-        return details
-    return {
-        "String": "ATTACK FAILED",
-        "Inputs": 0,
-        "Seconds": 0,
-        "Depth": 0
-    }
-
-
-def find_matching_hash(plaintext, match, details, truncate_limit, max_depth):
-    if max_depth == 0:
-        return False
-    
-    ciphertext = truncate(hash_sha256(plaintext), truncate_limit)
-    cipher_match = truncate(hash_sha256(match), truncate_limit)
-    details["Inputs"] += 1
-    if ciphertext == cipher_match:
-        details["String"] = match
-        details["Seconds"] += time.time()
-        details["Depth"] -= max_depth
-        return True
-    
-    for char in CHAR_LIST:
-        next = find_matching_hash(
-            plaintext, 
-            match + char, 
-            details, 
-            truncate_limit, 
-            max_depth - 1
-        )
-        if next:
-            return True
-    return False
-
+    while len(strings) < value_count:
+        new_string = get_random_string()
+        new_hash = truncate(hash_sha256(new_string), bit_length)
+        if new_hash in strings.keys():
+            if strings[new_hash] != new_string:
+                return_object["String 1"] = strings[new_hash]
+                return_object["String 2"] = new_string
+                break
+        else:
+            strings[new_hash] = new_string
+            return_object["Inputs"] += 1
+    return_object["Seconds"] += time.time()
+    return return_object    
 
 def graph(df, column):
     df[column].plot(
         kind="line", 
-        title="{} vs Digest Size".format(column),
+        title="Birthday Attack: {} vs Digest Size".format(column),
         xticks=range(df.index[0], df.index[-1] + 1, 2),
         xlabel="Digest Size in Bits",
     )
@@ -108,16 +70,18 @@ def task1b(str1, str2):
         str2, hash_sha256(str2)
     ))
 
-def task1c(string, min_bit_size, max_bit_size):
+def task1c(min_bit_size, max_bit_size):
     df = pd.DataFrame(
         index=range(min_bit_size, max_bit_size + 1, 2),
-        columns=["String", "Inputs", "Seconds"]
+        columns=["String 1", "String 2", "Inputs", "Seconds"]
     )
     for i in df.index:
-        results = birthday_attack(string, i)
-        df["String"][i] = results["String"]
+        results = birthday_attack(i, 0.999)
+        df["String 1"][i] = results["String 1"]
+        df["String 2"][i] = results["String 2"]
         df["Inputs"][i] = results["Inputs"]
         df["Seconds"][i] = results["Seconds"]
+        print(df.loc[i])
     return df
     
 
@@ -129,7 +93,7 @@ task1b("abcdef1","abcdefgh")
 
 # %%
 print("Task 1c:\n")
-attack_df = task1c("Cameron", 8, 50)
+attack_df = task1c(8, 50)
 graph(attack_df, "Inputs")
 graph(attack_df, "Seconds")
 
