@@ -1,8 +1,4 @@
-from nltk.corpus import words
 from bcrypt import *
-
-
-word_list = words.words()
 
 with open('shadow.txt') as f:
     pwd_list = f.read().splitlines()

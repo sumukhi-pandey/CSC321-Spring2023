@@ -95,7 +95,10 @@ task1b("abcdef1","abcdefgh")
 # %%
 print("Task 1c:\n")
 attack_df = task1c(8, 50)
-graph(attack_df, "Inputs")
-graph(attack_df, "Seconds")
+attack_df
 
+# graph(attack_df, "Inputs")
+# graph(attack_df, "Seconds")
+
+# truncate(hash_sha256(""), )
 # %%
